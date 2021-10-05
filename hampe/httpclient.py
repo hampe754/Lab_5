@@ -42,12 +42,11 @@ def main():
     # this resource request should result in "chunked" data transfer
     get_http_resource('http://www.httpvshttps.com/',
                       'index.html')
-    
+
     # HTTPS example. (Just for fun.)
     # get_http_resource('https://www.httpvshttps.com/', 'https_index.html')
 
     # If you find fun examples of chunked or Content-Length pages, please share them with us!
-
 
 
 def get_http_resource(url, file_name):
@@ -70,7 +69,7 @@ def get_http_resource(url, file_name):
         use_https = False
         protocol = 'http'
         default_port = 80
-    url_match = re.search(protocol+'://([^/:]*)(:\d*)?(/.*)', url)
+    url_match = re.search(protocol + '://([^/:]*)(:\d*)?(/.*)', url)
     url_match_groups = url_match.groups() if url_match else []
     #    print 'url_match_groups=',url_match_groups
     if len(url_match_groups) == 3:
@@ -78,7 +77,7 @@ def get_http_resource(url, file_name):
         host_port = int(url_match_groups[1][1:]) if url_match_groups[1] else default_port
         host_resource = url_match_groups[2]
         print('host name = {0}, port = {1}, resource = {2}'.
-                format(host_name, host_port, host_resource))
+              format(host_name, host_port, host_resource))
         status_string = do_http_exchange(use_https, host_name.encode(), host_port,
                                          host_resource.encode(), file_name)
         print('get_http_resource: URL="{0}", status="{1}"'.format(url, status_string))
@@ -103,17 +102,48 @@ def do_http_exchange(use_https, host, port, resource, file_name):
     :rtype: int
     """
     request_resource(host, port, resource)
+
+    receive_resource()
+
     return 500  # Replace this "server error" with the actual status code
 
 
 def request_resource(host, port, resource):
     tcp_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     tcp_socket.connect((host, port))
-    address = b'GET '+resource+b' HTTP/1.1\r\nHOST:'+host+b'\r\n\r\n'
+    address = b'GET ' + resource + b' HTTP/1.1\r\nHOST:' + host + b'\r\n\r\n'
     tcp_socket.send(address)
     response = tcp_socket.recv(1500)
     print(response.decode())
     tcp_socket.close()
+
+
+def receive_resource():
+    pass
+
+
+def read_status_line():
+    pass
+
+
+def read_headers():
+    pass
+
+
+def read_header_name():
+    pass
+
+
+def check_header_importance():
+    pass
+
+
+def read_header_value():
+    pass
+
+
+def no_more_headers():
+    pass
 
 
 # Define additional functions here as necessary
