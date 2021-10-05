@@ -102,8 +102,19 @@ def do_http_exchange(use_https, host, port, resource, file_name):
     :return: the status code
     :rtype: int
     """
- 
+    request_resource(host, port, resource)
     return 500  # Replace this "server error" with the actual status code
+
+
+def request_resource(host, port, resource):
+    tcp_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    tcp_socket.connect((host, port))
+    address = b'GET '+resource+b' HTTP/1.1\r\nHOST:'+host+b'\r\n\r\n'
+    tcp_socket.send(address)
+    response = tcp_socket.recv(1500)
+    print(response.decode())
+    tcp_socket.close()
+
 
 # Define additional functions here as necessary
 # Don't forget docstrings and :author: tags
