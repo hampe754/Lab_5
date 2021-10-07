@@ -114,8 +114,58 @@ def request_resource(host, port, resource):
     address = b'GET ' + resource + b' HTTP/1.1\r\nHOST:' + host + b'\r\n\r\n'
     tcp_socket.send(address)
     response = tcp_socket.recv(1500)
-    print(response.decode())
+    print(response)
     tcp_socket.close()
+    return response
+
+
+def determine_chunked(data_socket, transfer_encoding_value, content_length):
+    if transfer_encoding_value:
+        read_chunked_body()
+        print('is')
+    else:
+        read_content_length(content_length)
+        print('not')
+
+
+def read_chunked_body(data_socket):
+    read_chunk()
+    print('ischsunk')
+
+
+def read_chunk(data_socket):
+    print(next_byte(data_socket))
+    pass
+
+
+def read_content_length(content_length):
+    print('readsContentLenght')
+
+
+def read_body(data_socket):
+    pass
+
+
+def read_line(data_socket):
+    pass
+
+
+def next_byte(data_socket):
+    """
+    Read the next byte from the socket data_socket.
+
+    Read the next byte from the sender, received over the network.
+    If the byte has not yet arrived, this method blocks (waits)
+      until the byte arrives.
+    If the sender is done sending and is waiting for your response, this method blocks indefinitely.
+
+    :param data_socket: The socket to read from. The data_socket argument should be an open tcp
+                        data connection (either a client socket or a server data socket), not a tcp
+                        server's listening socket.
+    :return: the next byte, as a bytes object with a single byte in it
+    """
+
+    return data_socket.recv(1)
 
 
 def receive_resource():
