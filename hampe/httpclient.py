@@ -103,8 +103,6 @@ def do_http_exchange(use_https, host, port, resource, file_name):
     """
     request_resource(host, port, resource)
 
-    receive_resource()
-
     return 500  # Replace this "server error" with the actual status code
 
 
@@ -113,10 +111,11 @@ def request_resource(host, port, resource):
     tcp_socket.connect((host, port))
     address = b'GET ' + resource + b' HTTP/1.1\r\nHOST:' + host + b'\r\n\r\n'
     tcp_socket.send(address)
-    response = tcp_socket.recv(1500)
-    print(response)
+    b = True
+    while(b):
+        receive_resource(tcp_socket)
     tcp_socket.close()
-    return response
+    ##return response
 
 
 def determine_chunked(data_socket, transfer_encoding_value, content_length):
@@ -168,12 +167,18 @@ def next_byte(data_socket):
     return data_socket.recv(1)
 
 
-def receive_resource():
-    pass
+def receive_resource(data_socket):
+    read_status_line(data_socket)
 
 
-def read_status_line():
-    pass
+def read_status_line(data_socket):
+    str = next_byte(data_socket).decode()
+    pain = ''
+    while str != '\r':
+        pain += str
+        str = next_byte(data_socket).decode()
+
+    print(pain)
 
 
 def read_headers():
