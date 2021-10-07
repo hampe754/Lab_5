@@ -113,7 +113,7 @@ def request_resource(host, port, resource):
     tcp_socket.send(address)
     b = True
     while(b):
-        receive_resource(tcp_socket)
+        b = receive_resource(tcp_socket)
     tcp_socket.close()
     ##return response
 
@@ -169,16 +169,17 @@ def next_byte(data_socket):
 
 def receive_resource(data_socket):
     read_status_line(data_socket)
+    return False;
 
 
 def read_status_line(data_socket):
-    str = next_byte(data_socket).decode()
-    pain = ''
-    while str != '\r':
-        pain += str
-        str = next_byte(data_socket).decode()
+    b = next_byte(data_socket)
+    str = b''
+    while b != b'\x0D':
+        str += b
+        b = next_byte(data_socket)
 
-    print(pain)
+    print(str)
 
 
 def read_headers():
