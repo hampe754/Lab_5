@@ -120,15 +120,15 @@ def request_resource(host, port, resource):
 
 def determine_chunked(data_socket, transfer_encoding_value, content_length):
     if transfer_encoding_value:
-        read_chunked_body()
-        print('is')
+        read_chunked_body(data_socket)
+        print('ISACHUNK')
     else:
-        read_content_length(content_length)
-        print('not')
+        read_content_length(data_socket, content_length)
+        print('NOTACHUNK')
 
 
 def read_chunked_body(data_socket):
-    read_chunk()
+    read_chunk(data_socket)
     print('ischsunk')
 
 
@@ -137,7 +137,10 @@ def read_chunk(data_socket):
     pass
 
 
-def read_content_length(content_length):
+def read_content_length(data_socket, content_length):
+    while content_length > 0:
+        print(next_byte(data_socket))
+        content_length -= 1
     print('readsContentLenght')
 
 
@@ -169,13 +172,14 @@ def next_byte(data_socket):
 
 def receive_resource(data_socket):
     read_status_line(data_socket)
+    determine_chunked(data_socket, False, 20)
     return False;
 
 
 def read_status_line(data_socket):
     b = next_byte(data_socket)
     str = b''
-    while b != b'\x0D':
+    while not str.endswith(b'\r\n\r\n'):
         str += b
         b = next_byte(data_socket)
 
