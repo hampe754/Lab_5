@@ -128,20 +128,40 @@ def determine_chunked(data_socket, transfer_encoding_value, content_length):
 
 
 def read_chunked_body(data_socket):
-    read_chunk(data_socket)
-    print('ischsunk')
+    calculate_length = b''
+    while not calculate_length.endswith(b'\r\n'):
+        next_byte(data_socket)
+    length = int(calculate_length.rstrip(b'\r\n'))
+    if length != 0:
+        read_chunk(data_socket, length)
+        print('ischsunk')
 
 
-def read_chunk(data_socket):
+def read_chunk(data_socket, length):
+    while length > 0:
+        next_byte(data_socket)
+        length -= 1
     print(next_byte(data_socket))
     pass
 
 
 def read_content_length(data_socket, content_length):
-    while content_length > 0:
-        print(next_byte(data_socket))
-        content_length -= 1
+    write_to_text_file(data_socket, "not_chunked", content_length)
     print('readsContentLenght')
+
+
+def write_to_text_file(bytes_block, file_name, length):
+    """
+    - programed by Josiah Clausen
+    - takes in a text block and the message number to write to a file and create one
+    - the text block is converted to to bytes and writen to a byte file
+    - a new text file is writen with increasing value such as 1.txt, 2.txt... and so on
+    - if the server is restarted old files will be over written
+    -:param String text_block: gets the text from the server in string form and writes it to a bytes file
+    -:param int message_num: keeps track of the message being sent from 1, 2, 3..... etc is and int
+    """
+    out_file = open(file_name+".txt", 'wb')
+    out_file.write(bytes_block.recv(length))
 
 
 def read_body(data_socket):
@@ -166,13 +186,12 @@ def next_byte(data_socket):
                         server's listening socket.
     :return: the next byte, as a bytes object with a single byte in it
     """
-
     return data_socket.recv(1)
 
 
 def receive_resource(data_socket):
     read_status_line(data_socket)
-    determine_chunked(data_socket, False, 20)
+    determine_chunked(data_socket, False, 2000)
     return False;
 
 
