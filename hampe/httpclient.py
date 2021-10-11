@@ -112,7 +112,7 @@ def request_resource(host, port, resource):
     address = b'GET ' + resource + b' HTTP/1.1\r\nHOST:' + host + b'\r\n\r\n'
     tcp_socket.send(address)
     b = True
-    while(b):
+    while (b):
         b = receive_resource(tcp_socket)
     tcp_socket.close()
     ##return response
@@ -129,12 +129,19 @@ def determine_chunked(data_socket, transfer_encoding_value, content_length):
 
 def read_chunked_body(data_socket):
     calculate_length = b''
+    x = 0
+    while x < 100:
+        x += 1
+        calculate_length += next_byte(data_socket)
+    """
     while not calculate_length.endswith(b'\r\n'):
-        next_byte(data_socket)
+        calculate_length += next_byte(data_socket)
     length = int(calculate_length.rstrip(b'\r\n'))
     if length != 0:
         read_chunk(data_socket, length)
         print('ischsunk')
+        """
+    print(calculate_length)
 
 
 def read_chunk(data_socket, length):
@@ -160,7 +167,7 @@ def write_to_text_file(bytes_block, file_name, length):
     -:param String text_block: gets the text from the server in string form and writes it to a bytes file
     -:param int message_num: keeps track of the message being sent from 1, 2, 3..... etc is and int
     """
-    out_file = open(file_name+".txt", 'wb')
+    out_file = open(file_name + ".txt", 'wb')
     out_file.write(bytes_block.recv(length))
 
 
@@ -190,35 +197,66 @@ def next_byte(data_socket):
 
 
 def receive_resource(data_socket):
-    read_status_line(data_socket)
-    determine_chunked(data_socket, False, 2000)
+    b = read_status_line(data_socket)
+    print(b)
+    is_it_chunked, length = read_headers(data_socket)
+    determine_chunked(data_socket, is_it_chunked, length)
     return False;
 
 
 def read_status_line(data_socket):
-    b = next_byte(data_socket)
-    str = b''
-    while not str.endswith(b'\r\n\r\n'):
-        str += b
-        b = next_byte(data_socket)
-
-    print(str)
+    b = b''
+    while not b.endswith(b'\r\n'):
+        b += next_byte(data_socket)
+    return b
 
 
-def read_headers():
+def read_headers(data_socket):
+    length = b''
+    chunked = False
+    no_more_headers = False
+    while not no_more_headers:
+        header_name = read_header_name(data_socket)
+        if header_name == b'Transfer-Encoding:':
+            chunked = read_header_value(data_socket)
+            print(chunked)
+        elif header_name == b'Content-Length':
+            length = read_header_value(data_socket)
+            print(length)
+        elif header_name == b'\r\n':
+            no_more_headers = False
+        else:
+            read_header_value(data_socket)
+    return chunked, length
+
+
+def read_header_name(data_socket):
+    bytes = b''
+    is_end = False
+    while not bytes.endswith(b':') and not is_end:
+        if bytes == b'\r\n':
+            is_end = True
+        else:
+            bytes += next_byte(data_socket)
+
+    print(bytes)
+
+    return bytes, is_end
+
+
+def check_header_importance(data_socket, header_name):
+    if header_name == b'Transfer-Encoding:':
+        return 0
+    elif header_name == b'Content-Length:':
+        return 1
     pass
 
 
-def read_header_name():
-    pass
-
-
-def check_header_importance():
-    pass
-
-
-def read_header_value():
-    pass
+def read_header_value(data_socket):
+    byte = b''
+    while not byte.endswith(b'\r\n'):
+        byte += next_byte(data_socket)
+    return byte
 
 
 def no_more_headers():
