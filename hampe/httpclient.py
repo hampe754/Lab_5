@@ -251,8 +251,7 @@ def read_headers(data_socket):
     while not no_more_headers:
         header_name, no = read_header_name(data_socket)
         if header_name == b'Transfer-Encoding:':
-            chunked = True
-            # chunked = read_header_value(data_socket)
+            chunked = read_header_encoding(data_socket)
             print(chunked)
         elif header_name == b'Content-Length:':
             length = read_header_value(data_socket)
@@ -291,15 +290,17 @@ def read_header_value(data_socket):
     byte = byte.replace(b'\r\n', b'')
     return byte
 
-def read_header_Encoding(data_socket):
+
+def read_header_encoding(data_socket):
     byte = b''
     is_chunked = False
     while not byte.endswith(b'\r\n'):
         byte += next_byte(data_socket)
     byte = byte.replace(b'\r\n', b'')
-    if byte == b' Chunked':
+    if byte == b' chunked':
         is_chunked = True
     return is_chunked
+
 
 def no_more_headers():
     pass
