@@ -117,6 +117,13 @@ def request_resource(host, port, resource):
 
 
 def determine_chunked(data_socket, transfer_encoding_value, content_length):
+    """
+    -author Josiah Clausen
+    :param data_socket: this is the data socket from the website and is used to get bytes from it
+    :param transfer_encoding_value: boolean for weather the information is chunked or not
+    :param content_length: the content length just encase the information is not chunked
+    :return:
+    """
     if transfer_encoding_value:
         read_chunked_body(data_socket)
         print('ISACHUNK')
@@ -126,6 +133,13 @@ def determine_chunked(data_socket, transfer_encoding_value, content_length):
 
 
 def read_chunked_body(data_socket):
+    """
+    -author: Josiah Clausen
+    -this method is used to read all the chunks in from the website it saves them to a byte object to be save and pushed
+    -to a write file.
+    :param data_socket: this is the data socket from the website and is used to get bytes from it
+    :return:
+    """
     whole_chunk = b''
     end_chunks = False
     while not end_chunks:
@@ -141,6 +155,12 @@ def read_chunked_body(data_socket):
 
 
 def read_chunk(data_socket, length):
+    """
+    -author: Josiah Clausen
+    :param data_socket: this is the data socket from the website and is used to get bytes from it
+    :param length: is the length of the chunk that is being read
+    :return: returns a byte object with all the bytes from that chunk
+    """
     length_of_chunk = int(length, 16)
     chunk_information = b''
     while length_of_chunk > 0:
@@ -150,13 +170,19 @@ def read_chunk(data_socket, length):
 
 
 def read_content_length(data_socket, content_length):
+    """
+    -author: Josiah Clausen
+    :param data_socket: this is the data socket from the website and is used to get bytes from it
+    :param content_length: the length of the whole HTTP get request
+    :return:
+    """
     body = read_body(data_socket, content_length)
     write_to_text_file(body, "not_chunked")
 
 
 def write_to_text_file(bytes_block, file_name):
     """
-    - programed by Josiah Clausen
+    - author: Josiah Clausen
     - takes in a text block and the message number to write to a file and create one
     - the text block is converted to to bytes and writen to a byte file
     - a new text file is writen with increasing value such as 1.txt, 2.txt... and so on
@@ -169,6 +195,12 @@ def write_to_text_file(bytes_block, file_name):
 
 
 def read_body(data_socket, total_length):
+    """
+    -author: Josiah Clausen
+    :param data_socket: this is the data socket from the website and is used to get bytes from it
+    :param total_length: used to get the total length of the body so it can be retrieved
+    :return: a bytes object
+    """
     length = int(total_length)
     body = b''
     while length > 0:
