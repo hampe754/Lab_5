@@ -101,22 +101,22 @@ def do_http_exchange(use_https, host, port, resource, file_name):
     :return: the status code
     :rtype: int
     """
-    request_resource(host, port, resource)
+    request_resource(host, port, resource, file_name)
 
     return 500  # Replace this "server error" with the actual status code
 
 
-def request_resource(host, port, resource):
+def request_resource(host, port, resource, file_name):
     tcp_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     tcp_socket.connect((host, port))
     address = b'GET ' + resource + b' HTTP/1.1\r\nHOST:' + host + b'\r\n\r\n'
     tcp_socket.send(address)
-    receive_resource(tcp_socket)
+    receive_resource(tcp_socket, file_name)
     tcp_socket.close()
     ##return response
 
 
-def determine_chunked(data_socket, transfer_encoding_value, content_length):
+def determine_chunked(data_socket, transfer_encoding_value, content_length, file_name):
     """
     -author Josiah Clausen
     :param data_socket: this is the data socket from the website and is used to get bytes from it
@@ -125,14 +125,14 @@ def determine_chunked(data_socket, transfer_encoding_value, content_length):
     :return:
     """
     if transfer_encoding_value:
-        read_chunked_body(data_socket)
+        read_chunked_body(data_socket, file_name)
         print('ISACHUNK')
     else:
-        read_content_length(data_socket, content_length)
+        read_content_length(data_socket, content_length, file_name)
         print('NOTACHUNK')
 
 
-def read_chunked_body(data_socket):
+def read_chunked_body(data_socket, file_name):
     """
     -author: Josiah Clausen
     -this method is used to read all the chunks in from the website it saves them to a byte object to be save and pushed
@@ -151,7 +151,7 @@ def read_chunked_body(data_socket):
             end_chunks = True
         else:
             whole_chunk += read_chunk(data_socket, calculate_length)
-    write_to_text_file(whole_chunk, "CHUNKED")
+    write_to_text_file(whole_chunk, file_name)
 
 
 def read_chunk(data_socket, length):
@@ -169,7 +169,7 @@ def read_chunk(data_socket, length):
     return chunk_information
 
 
-def read_content_length(data_socket, content_length):
+def read_content_length(data_socket, content_length, file_name):
     """
     -author: Josiah Clausen
     :param data_socket: this is the data socket from the website and is used to get bytes from it
@@ -177,7 +177,7 @@ def read_content_length(data_socket, content_length):
     :return:
     """
     body = read_body(data_socket, content_length)
-    write_to_text_file(body, "not_chunked")
+    write_to_text_file(body, file_name)
 
 
 def write_to_text_file(bytes_block, file_name):
@@ -230,11 +230,11 @@ def next_byte(data_socket):
     return data_socket.recv(1)
 
 
-def receive_resource(data_socket):
+def receive_resource(data_socket, file_name):
     b = read_status_line(data_socket)
     print(b)
     is_it_chunked, length = read_headers(data_socket)
-    determine_chunked(data_socket, is_it_chunked, length)
+    determine_chunked(data_socket, is_it_chunked, length, file_name)
 
 
 def read_status_line(data_socket):
