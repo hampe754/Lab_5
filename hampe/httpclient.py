@@ -128,36 +128,35 @@ def determine_chunked(data_socket, transfer_encoding_value, content_length):
 
 
 def read_chunked_body(data_socket):
-    calculate_length = b''
-    x = 0
-    while x < 100:
-        x += 1
-        calculate_length += next_byte(data_socket)
-    """
-    while not calculate_length.endswith(b'\r\n'):
-        calculate_length += next_byte(data_socket)
-    length = int(calculate_length.rstrip(b'\r\n'))
-    if length != 0:
-        read_chunk(data_socket, length)
-        print('ischsunk')
-        """
-    print(calculate_length)
+    whole_chunk = b''
+    end_chunks = False
+    while not end_chunks:
+        calculate_length = b''
+        while not calculate_length.endswith(b'\r\n'):
+            calculate_length += next_byte(data_socket)
+        calculate_length = calculate_length.replace(b'\r\n', b'')
+        if calculate_length == b'':
+            end_chunks = True
+        else:
+           whole_chunk += read_chunk(data_socket, calculate_length)
+    write_to_text_file(whole_chunk, "CHUNKED")
 
 
 def read_chunk(data_socket, length):
-    while length > 0:
-        next_byte(data_socket)
-        length -= 1
-    print(next_byte(data_socket))
-    pass
+    length_of_chunk = int(length, 16)
+    chunk_information = b''
+    while length_of_chunk > 0:
+        chunk_information += next_byte(data_socket)
+        length_of_chunk -= 1
+    return chunk_information
 
 
 def read_content_length(data_socket, content_length):
-    write_to_text_file(data_socket, "not_chunked", content_length)
+    write_to_text_file(data_socket.recv(int(content_length)), "not_chunked")
     print('readsContentLenght')
 
 
-def write_to_text_file(bytes_block, file_name, length):
+def write_to_text_file(bytes_block, file_name):
     """
     - programed by Josiah Clausen
     - takes in a text block and the message number to write to a file and create one
@@ -168,7 +167,7 @@ def write_to_text_file(bytes_block, file_name, length):
     -:param int message_num: keeps track of the message being sent from 1, 2, 3..... etc is and int
     """
     out_file = open(file_name + ".txt", 'wb')
-    out_file.write(bytes_block.recv(length))
+    out_file.write(bytes_block)
 
 
 def read_body(data_socket):
@@ -216,15 +215,15 @@ def read_headers(data_socket):
     chunked = False
     no_more_headers = False
     while not no_more_headers:
-        header_name = read_header_name(data_socket)
+        header_name, no = read_header_name(data_socket)
         if header_name == b'Transfer-Encoding:':
             chunked = read_header_value(data_socket)
             print(chunked)
-        elif header_name == b'Content-Length':
+        elif header_name == b'Content-Length:':
             length = read_header_value(data_socket)
             print(length)
         elif header_name == b'\r\n':
-            no_more_headers = False
+            no_more_headers = True
         else:
             read_header_value(data_socket)
     return chunked, length
@@ -238,9 +237,7 @@ def read_header_name(data_socket):
             is_end = True
         else:
             bytes += next_byte(data_socket)
-
     print(bytes)
-
     return bytes, is_end
 
 
@@ -256,7 +253,7 @@ def read_header_value(data_socket):
     byte = b''
     while not byte.endswith(b'\r\n'):
         byte += next_byte(data_socket)
-    return byte
+    return byte.replace(b'\r\n', b'')
 
 
 def no_more_headers():
