@@ -1,24 +1,24 @@
 """
-- NOTE: REPLACE 'N' Below with your section, year, and lab number
-- CS2911 - 0NN
-- Fall 202N
-- Lab N
+- CS2911 - 051
+- Fall 2021
+- Lab 05
 - Names:
-  - 
-  - 
+  - Josiah Clausen
+  - Elisha Hamp
 
 An HTTP client
 
-Introduction: (Describe the lab in your own words)
+Introduction:
+    This lab is designed to familiarize students with reading http packets and writing a tcp client. It does so by
+requiring the students to code a client to make a tcp request to a tcp server. The students then must write code
+to understand the values returned from the given http website. This includes reading a regular and chunked response,
+along with reading header names and storing important values.
 
 
-
-
-Summary: (Summarize your experience with the lab, what you learned, what you liked, what you
-   disliked, and any suggestions you have for improvement)
-
-
-
+Summary:
+    This lab challenged our understanding of how http headers are formatted and function. Getting the program to read
+the file by individual bytes was easy enough and fun to accomplish, however working with the bytes and finding
+ways to use them properly to get the desired output was difficult. There are no changes we would suggest.
 
 
 """
@@ -107,12 +107,13 @@ def do_http_exchange(use_https, host, port, resource, file_name):
 
 def request_resource(host, port, resource, file_name):
     """
-
-    :param host:
-    :param port:
-    :param resource:
-    :param file_name:
-    :return:
+    :author Both
+    Makes a client that sends a request to the server and then catches the response.
+    :param host: website given to us by instructor
+    :param port: connection port given by instructor
+    :param resource: everything after domain name
+    :param file_name: name of the file that will be created
+    :return: status code received from website
     """
     tcp_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     tcp_socket.connect((host, port))
@@ -129,6 +130,7 @@ def determine_chunked(data_socket, transfer_encoding_value, content_length, file
     :param data_socket: this is the data socket from the website and is used to get bytes from it
     :param transfer_encoding_value: boolean for weather the information is chunked or not
     :param content_length: the content length just encase the information is not chunked
+    :param file_name: name of the file with the extension
     :return:
     """
     if transfer_encoding_value:
@@ -143,6 +145,7 @@ def read_chunked_body(data_socket, file_name):
     -this method is used to read all the chunks in from the website it saves them to a byte object to be save and pushed
     -to a write file.
     :param data_socket: this is the data socket from the website and is used to get bytes from it
+    :param file_name: name of the file with the extension
     :return:
     """
     whole_chunk = b''
@@ -157,6 +160,13 @@ def read_chunked_body(data_socket, file_name):
 
 
 def get_chunk_length(data_socket):
+    """
+    :author: Josiah Clausen
+    :helper method designed to get the length of each chunk from the bytes
+    read with the data socket.
+    :param data_socket: received from website, used to read bytes
+    :return: returns the length of the next chunk
+    """
     calculated_length = b''
     while not calculated_length.endswith(b'\r\n'):
         calculated_length += next_byte(data_socket)
@@ -184,6 +194,7 @@ def read_content_length(data_socket, content_length, file_name):
     -author: Josiah Clausen
     :param data_socket: this is the data socket from the website and is used to get bytes from it
     :param content_length: the length of the whole HTTP get request
+    :param file_name: name of the file with the extension
     :return:
     """
     body = read_body(data_socket, content_length)
@@ -206,7 +217,8 @@ def write_to_text_file(bytes_block, file_name):
 
 def read_body(data_socket, total_length):
     """
-    -author: Josiah Clausen
+    :author: Josiah Clausen
+    Reads the body of the website.
     :param data_socket: this is the data socket from the website and is used to get bytes from it
     :param total_length: used to get the total length of the body so it can be retrieved
     :return: a bytes object
@@ -237,13 +249,27 @@ def next_byte(data_socket):
 
 
 def receive_resource(data_socket, file_name):
-    b = read_status_line(data_socket)
+    """
+    :author: Elisha Hamp
+    Reads the status line and headers before reading the body.
+    :param data_socket: socket from website where response is being received
+    :param file_name: name of the file to be output
+    :return: returns the status code
+    """
+    status_code = read_status_line(data_socket)
     is_it_chunked, length = read_headers(data_socket)
     determine_chunked(data_socket, is_it_chunked, length, file_name)
-    return b
+    return status_code
 
 
 def read_status_line(data_socket):
+    """
+    :author: Elisha Hamp
+    Reads through the end of the status line,
+    splits it by spaces, and stores the status code.
+    :param data_socket: socket from website where response is being received
+    :return: the status code
+    """
     b = b''
     while not b.endswith(b'\r\n'):
         b += next_byte(data_socket)
@@ -252,49 +278,90 @@ def read_status_line(data_socket):
 
 
 def read_headers(data_socket):
+    """
+    :author: Elisha Hamp
+    Uses a while loop to read through every header in the response until it reaches
+    a double carriage return, line feed.
+    :param data_socket: socket from website where response is being received
+    :return:
+    """
     length = b''
     chunked = False
     no_more_headers = False
     while not no_more_headers:
-        header_name, no = read_header_name(data_socket)
-        if header_name == b'Transfer-Encoding:':
-            chunked = read_header_encoding(data_socket)
-            print(chunked)
-        elif header_name == b'Content-Length:':
-            length = read_header_value(data_socket)
-            print(length)
-        elif header_name == b'\r\n':
-            no_more_headers = True
-        else:
-            read_header_value(data_socket)
+        header_name = read_header_name(data_socket)
+        chunked, length, no_more_headers = check_header_importance(header_name, data_socket,
+                                                                   length, chunked, no_more_headers)
     return chunked, length
 
 
-def check_header_importance(data_socket):
+def check_header_importance(header_name, data_socket, length, chunked, no_more_headers):
+    """
+    :author: Elisha Hamp
+    Checks to see if the head being read holds any values important to our lab.
+    :param header_name: name of the header being checked
+    :param data_socket: socket from website where response is being received
+    :param length: The length of the body, if received
+    :param chunked: boolean which is made true if the transfer encoding is chunked
+    :param no_more_headers: false boolean that will be used to terminate the loop
+    in read headers
+    :return:
+    chunked: True if transfer encoding is chunked
+    length: Length of the body of the response
+    no_more_headers: True if the header name is CRLF
+    """
+    if header_name == b'Transfer-Encoding:':
+        chunked = read_header_encoding(data_socket)
+    elif header_name == b'Content-Length:':
+        length = read_header_value(data_socket)
+    elif header_name == b'\r\n':
+        no_more_headers = True
+    else:
+        read_header_value(data_socket)
+    return chunked, length, no_more_headers
 
 
 def read_header_name(data_socket):
+    """
+    :author: Elisha Hamp
+    Uses a while loop to receive the header name in full as a byte literal.
+    :param data_socket: socket from website where response is being received
+    :return: header name as a byte literal
+    """
     header_bytes = b''
     while not header_bytes.endswith(b':') and not header_bytes == b'\r\n':
         header_bytes += next_byte(data_socket)
-    return header_bytes, True
+    return header_bytes
 
 
 def read_header_value(data_socket):
-    byte = b''
-    while not byte.endswith(b'\r\n'):
-        byte += next_byte(data_socket)
-    byte = byte.replace(b'\r\n', b'')
-    return byte
+    """
+    Uses a while loop to read the bytes between the end of a header's name
+    and the end of the header value.
+    :author: Elisha Hamp
+    :param data_socket: socket from website where response is being received
+    :return: header value as a byte literal
+    """
+    value_bytes = b''
+    while not value_bytes.endswith(b'\r\n'):
+        value_bytes += next_byte(data_socket)
+    value_bytes = value_bytes.replace(b'\r\n', b'')
+    return value_bytes
 
 
 def read_header_encoding(data_socket):
-    byte = b''
+    """
+    Determines whether the encoding of the body is chunked
+    :author: Elisha Hamp
+    :param data_socket: socket from website where response is being received
+    :return: True if the encoding is chunked
+    """
+    encoding_bytes = b''
     is_chunked = False
-    while not byte.endswith(b'\r\n'):
-        byte += next_byte(data_socket)
-    byte = byte.replace(b'\r\n', b'')
-    if byte == b' chunked':
+    while not encoding_bytes.endswith(b'\r\n'):
+        encoding_bytes += next_byte(data_socket)
+    encoding_bytes = encoding_bytes.replace(b'\r\n', b'')
+    if encoding_bytes == b' chunked':
         is_chunked = True
     return is_chunked
 
